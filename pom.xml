@@ -80,11 +80,6 @@
       <artifactId>jfreechart</artifactId>
       <version>1.0.0</version>
     </dependency>
-    <dependency>
-      <groupId>org.jenkins-ci.plugins</groupId>
-      <artifactId>dashboard-view</artifactId>
-      <version>2.4</version>
-    </dependency>
   </dependencies>
 
   <build>
