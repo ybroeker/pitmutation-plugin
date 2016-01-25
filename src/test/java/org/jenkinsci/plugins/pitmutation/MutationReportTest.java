@@ -67,19 +67,32 @@ public class MutationReportTest {
     Mutation m1 = mutations.next();
     Mutation m2 = mutations.next();
 
-    assertThat(m1.getLineNumber(), is(54));
-    assertThat(m1.isDetected(), is(true));
-    assertThat(m1.getStatus(), is("NO_COVERAGE"));
-    assertThat(m1.getSourceFile(), is("SafeMultipartFile.java"));
-    assertThat(m1.getMutatedClass(), is("com.mediagraft.podsplice.controllers.massupload.SafeMultipartFile"));
-    assertThat(m1.getMutator(), is("org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator"));
+    if (m1.getStatus().equals("KILLED")) {
+      verifyKilled(m1);
+      verifyNoCoverage(m2);
+    }
+    else {
+      verifyKilled(m2);
+      verifyNoCoverage(m1);
+    }
+  }
 
-    assertThat(m2.getLineNumber(), is(57));
-    assertThat(m2.isDetected(), is(false));
-    assertThat(m2.getStatus(), is("KILLED"));
-    assertThat(m2.getSourceFile(), is("SafeMultipartFile.java"));
-    assertThat(m2.getMutatedClass(), is("com.mediagraft.podsplice.controllers.massupload.SafeMultipartFile"));
-    assertThat(m2.getMutator(), is("org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator"));
+  private void verifyNoCoverage(Mutation m) {
+    assertThat(m.getLineNumber(), is(54));
+    assertThat(m.isDetected(), is(true));
+    assertThat(m.getStatus(), is("NO_COVERAGE"));
+    assertThat(m.getSourceFile(), is("SafeMultipartFile.java"));
+    assertThat(m.getMutatedClass(), is("com.mediagraft.podsplice.controllers.massupload.SafeMultipartFile"));
+    assertThat(m.getMutator(), is("org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator"));
+  }
+
+  private void verifyKilled(Mutation m) {
+    assertThat(m.getLineNumber(), is(57));
+    assertThat(m.isDetected(), is(false));
+    assertThat(m.getStatus(), is("KILLED"));
+    assertThat(m.getSourceFile(), is("SafeMultipartFile.java"));
+    assertThat(m.getMutatedClass(), is("com.mediagraft.podsplice.controllers.massupload.SafeMultipartFile"));
+    assertThat(m.getMutator(), is("org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator"));
   }
 
   private InputStream[] mutationsXml_;
