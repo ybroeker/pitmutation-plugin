@@ -15,7 +15,7 @@ public class PitProjectAction extends Actionable implements ProminentProjectActi
   public PitProjectAction(AbstractProject<?, ?> project) {
     this.project = project;
 
-    PitPublisher cp = (PitPublisher) project.getPublishersList().get(PitPublisher.DESCRIPTOR);
+//    PitPublisher cp = (PitPublisher) project.getPublishersList().get(PitPublisher.DESCRIPTOR);
 //    if (cp != null) {
 //      onlyStable = cp.getOnlyStable();
 //    }
@@ -35,6 +35,10 @@ public class PitProjectAction extends Actionable implements ProminentProjectActi
         return r;
     }
     return null;
+  }
+
+  public AbstractProject<?, ?> getProject() {
+    return project;
   }
 
   /**
