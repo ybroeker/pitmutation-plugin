@@ -64,18 +64,18 @@ public class MutationReportTest {
     Iterator<Mutation> mutations =
             report.getMutationsForClassName("com.mediagraft.podsplice.controllers.massupload.SafeMultipartFile").iterator();
 
-    Mutation m2 = mutations.next();
     Mutation m1 = mutations.next();
+    Mutation m2 = mutations.next();
 
-    assertThat(m1.isDetected(), is(true));
     assertThat(m1.getLineNumber(), is(54));
+    assertThat(m1.isDetected(), is(true));
     assertThat(m1.getStatus(), is("NO_COVERAGE"));
     assertThat(m1.getSourceFile(), is("SafeMultipartFile.java"));
     assertThat(m1.getMutatedClass(), is("com.mediagraft.podsplice.controllers.massupload.SafeMultipartFile"));
     assertThat(m1.getMutator(), is("org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator"));
 
-    assertThat(m2.isDetected(), is(false));
     assertThat(m2.getLineNumber(), is(57));
+    assertThat(m2.isDetected(), is(false));
     assertThat(m2.getStatus(), is("KILLED"));
     assertThat(m2.getSourceFile(), is("SafeMultipartFile.java"));
     assertThat(m2.getMutatedClass(), is("com.mediagraft.podsplice.controllers.massupload.SafeMultipartFile"));
