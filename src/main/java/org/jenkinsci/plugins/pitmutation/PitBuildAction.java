@@ -1,8 +1,7 @@
 package org.jenkinsci.plugins.pitmutation;
 
 import hudson.FilePath;
-import hudson.model.Result;
-
+import hudson.model.*;
 import hudson.util.ChartUtil;
 import hudson.util.DataSetBuilder;
 import org.jenkinsci.plugins.pitmutation.targets.ProjectMutations;
@@ -10,10 +9,6 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.kohsuke.stapler.StaplerProxy;
-
-import hudson.model.AbstractBuild;
-import hudson.model.HealthReport;
-import hudson.model.HealthReportingAction;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.xml.sax.SAXException;
@@ -30,12 +25,12 @@ import java.util.logging.Logger;
  */
 public class PitBuildAction implements HealthReportingAction, StaplerProxy {
 
-  public PitBuildAction(AbstractBuild<?,?> owner) {
+  public PitBuildAction(Run<?,?> owner) {
     owner_ = owner;
   }
 
   public PitBuildAction getPreviousAction() {
-    AbstractBuild<?,?> b = owner_;
+    Run<?,?> b = owner_;
     while(true) {
       b = b.getPreviousBuild();
       if(b==null)
@@ -48,7 +43,7 @@ public class PitBuildAction implements HealthReportingAction, StaplerProxy {
     }
   }
 
-  public AbstractBuild<?,?> getOwner() {
+  public Run<?,?> getOwner() {
     return owner_;
   }
 
@@ -103,8 +98,8 @@ public class PitBuildAction implements HealthReportingAction, StaplerProxy {
   /**
    * Gets the previous {@link PitBuildAction} of the given build.
    */
-  static PitBuildAction getPreviousResult(AbstractBuild<?, ?> start) {
-    AbstractBuild<?, ?> b = start;
+  static PitBuildAction getPreviousResult(Run<?, ?> start) {
+    Run<?, ?> b = start;
     while (true) {
       b = b.getPreviousNotFailedBuild();
       if (b == null) {
@@ -167,6 +162,6 @@ public class PitBuildAction implements HealthReportingAction, StaplerProxy {
 
   private static final Logger logger = Logger.getLogger(PitBuildAction.class.getName());
 
-  private AbstractBuild<?, ?> owner_;
+  private Run<?, ?> owner_;
   private Map<String, MutationReport> reports_;
 }
