@@ -63,10 +63,7 @@ public class PitPublisher extends Recorder implements SimpleBuildStep{
 
       listener_.getLogger().println("Looking for PIT reports in " + workspace.getRemote());
 
-      final FilePath[] moduleRoots = workspace.list(mutationStatsFile_);
-      final boolean multipleModuleRoots =
-              moduleRoots != null && moduleRoots.length > 1;
-      final FilePath moduleRoot = multipleModuleRoots ? workspace : workspace;
+      final FilePath moduleRoot =  workspace;
 
       ParseReportCallable fileCallable = new ParseReportCallable(mutationStatsFile_);
       FilePath[] reports = moduleRoot.act(fileCallable);
