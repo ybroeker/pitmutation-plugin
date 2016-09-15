@@ -1,7 +1,7 @@
 package org.jenkinsci.plugins.pitmutation.targets;
 
 import com.google.common.collect.Maps;
-import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import org.jenkinsci.plugins.pitmutation.Mutation;
 import org.jenkinsci.plugins.pitmutation.MutationReport;
 import org.jenkinsci.plugins.pitmutation.PitBuildAction;
@@ -20,7 +20,7 @@ public class ProjectMutations extends MutationResult<ProjectMutations> {
   }
 
   @Override
-  public AbstractBuild<?,?> getOwner() {
+  public Run<?, ?> getOwner() {
     return action_.getOwner();
   }
 

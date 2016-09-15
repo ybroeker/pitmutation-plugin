@@ -1,7 +1,7 @@
 package org.jenkinsci.plugins.pitmutation.targets;
 
 import com.google.common.collect.Ordering;
-import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -89,7 +89,7 @@ public abstract class MutationResult<T extends MutationResult> implements Compar
     return "#";
   }
 
-  public AbstractBuild<?,?> getOwner() {
+  public Run<?,?> getOwner() {
     return owner_;
   }
 
@@ -130,7 +130,7 @@ public abstract class MutationResult<T extends MutationResult> implements Compar
 
   static final Logger logger_ = Logger.getLogger(MutationResult.class.getName());
 
-  private AbstractBuild owner_;
+  private Run owner_;
   private MutationResult parent_;
   private String name_;
 }
