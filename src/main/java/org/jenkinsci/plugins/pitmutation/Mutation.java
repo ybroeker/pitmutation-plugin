@@ -113,6 +113,14 @@ public class Mutation {
     return methodDescription_;
   }
 
+  public void setDescription(final String description) {
+	  description_ = description;
+  }
+
+  public String getDescription() {
+    return description_;
+  }
+
   public String toString() {
     return file_ + ":" + lineNumber_ + " : " + status_ + " type:[" + mutator_ +"]";
   }
@@ -132,4 +140,5 @@ public class Mutation {
   private int index_;
   private String killedTest_;
   private String methodDescription_;
+  private String description_;
 }
