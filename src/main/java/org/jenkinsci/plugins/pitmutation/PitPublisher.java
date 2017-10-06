@@ -171,32 +171,52 @@ public class PitPublisher extends Recorder implements SimpleBuildStep{
     return mutationStatsFile_;
   }
 
-  private Condition percentageThreshold(final float percentage) {
-    return new Condition() {
-      public Result decideResult(PitBuildAction action) {
-        MutationStats stats = action.getReport().getMutationStats();
-        listener_.getLogger().println("Kill ratio is " + stats.getKillPercent() +"% ("
-                                      + stats.getKillCount() + "  " + stats.getTotalMutations() +")");
-        return stats.getKillPercent() >= percentage ? Result.SUCCESS : Result.FAILURE;
-      }
-    };
-  }
+	Condition percentageThreshold(final float percentage) {
+		return new PercentageThresholdCondition(percentage);
+	}
 
-  private Condition mustImprove() {
-    return new Condition() {
-      public Result decideResult(final PitBuildAction action) {
-        PitBuildAction previousAction = action.getPreviousAction();
-        if (previousAction != null) {
-          MutationStats stats = previousAction.getReport().getMutationStats();
-          listener_.getLogger().println("Previous kill ratio was " + stats.getKillPercent() + "%");
-          return action.getReport().getMutationStats().getKillPercent() <= stats.getKillPercent()
-                  ? Result.SUCCESS : Result.UNSTABLE ;
-        }
-        else {
-          return Result.SUCCESS;
-        }
-      }
-    };
+	class PercentageThresholdCondition implements Condition {
+		private final float percentage;
+
+		PercentageThresholdCondition(float percentage) {
+			super();
+			this.percentage = percentage;
+		}
+
+		public Result decideResult(PitBuildAction action) {
+			MutationStats stats = action.getReport().getMutationStats();
+			dologging(stats);
+			return stats.getKillPercent() >= percentage ? Result.SUCCESS : Result.FAILURE;
+		}
+
+		 void dologging(MutationStats stats) {
+			listener_.getLogger().println("Kill ratio is " + stats.getKillPercent() + "% (" + stats.getKillCount()
+					+ "  " + stats.getTotalMutations() + ")");
+		}
+	}
+  
+	class MustImproveCondition implements Condition {
+		public Result decideResult(final PitBuildAction action) {
+			PitBuildAction previousAction = action.getPreviousAction();
+			if (previousAction != null) {
+				MutationStats previousStats = previousAction.getReport().getMutationStats();
+				logInfo(action, previousStats);
+				return action.getReport().getMutationStats().getKillPercent() >= previousStats.getKillPercent() ? Result.SUCCESS
+						: Result.UNSTABLE;
+			} else {
+				return Result.SUCCESS;
+			}
+		}
+
+		 void logInfo(final PitBuildAction action, MutationStats stats) {
+			listener_.getLogger().println("Previous kill ratio was " + stats.getKillPercent() + "%");
+			listener_.getLogger()
+					.println("This kill ration is " + action.getReport().getMutationStats().getKillPercent() + "%");
+		}
+	}
+
+   Condition mustImprove() {
+    return new MustImproveCondition() ;
   }
 
   @Override
