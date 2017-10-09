@@ -111,6 +111,7 @@ public class PitPublisher extends Recorder implements SimpleBuildStep {
    *
    * @param reports     the reports
    * @param buildTarget the build target
+   * @param base        the base path of the report location
    */
   void publishReports(FilePath[] reports, FilePath buildTarget, final String base) {
     for (int i = 0; i < reports.length; i++) {
