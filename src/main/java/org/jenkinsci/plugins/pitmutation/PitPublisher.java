@@ -1,10 +1,26 @@
 package org.jenkinsci.plugins.pitmutation;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.annotation.Nonnull;
+
+import org.jenkinsci.plugins.pitmutation.targets.MutationStats;
+import org.jenkinsci.remoting.RoleChecker;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
+
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
-import hudson.model.*;
+import hudson.model.AbstractProject;
+import hudson.model.Action;
+import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
@@ -12,43 +28,33 @@ import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
-import org.jenkinsci.plugins.pitmutation.targets.MutationStats;
-import org.jenkinsci.remoting.RoleChecker;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
-
-import javax.annotation.Nonnull;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The type Pit publisher.
  *
  * @author edward
  */
-public class PitPublisher extends Recorder implements SimpleBuildStep{
+public class PitPublisher extends Recorder implements SimpleBuildStep {
 
-    /**
-     * The constant DESCRIPTOR.
-     */
-    @Extension
+  /**
+   * The constant DESCRIPTOR.
+   */
+  @Extension
   public static final BuildStepDescriptor<Publisher> DESCRIPTOR = new DescriptorImpl();
 
-    /**
-     * Instantiates a new Pit publisher.
-     *
-     * @param mutationStatsFile    the mutation stats file
-     * @param minimumKillRatio     the minimum kill ratio
-     * @param killRatioMustImprove the kill ratio must improve
-     */
-    @DataBoundConstructor
+  /**
+   * Instantiates a new Pit publisher.
+   *
+   * @param mutationStatsFile    the mutation stats file
+   * @param minimumKillRatio     the minimum kill ratio
+   * @param killRatioMustImprove the kill ratio must improve
+   */
+  @DataBoundConstructor
   public PitPublisher(String mutationStatsFile, float minimumKillRatio, boolean killRatioMustImprove) {
     mutationStatsFile_ = mutationStatsFile;
     killRatioMustImprove_ = killRatioMustImprove;
     minimumKillRatio_ = minimumKillRatio;
-    buildConditions_ = new ArrayList<Condition>();
+    buildConditions_ = new ArrayList<>();
     buildConditions_.add(percentageThreshold(minimumKillRatio));
     if (killRatioMustImprove) {
       buildConditions_.add(mustImprove());
@@ -61,17 +67,15 @@ public class PitPublisher extends Recorder implements SimpleBuildStep{
     listener_ = listener;
     build_ = build;
 
-      listener_.getLogger().println("Looking for PIT reports in " + workspace.getRemote());
+    listener_.getLogger().println("Looking for PIT reports in " + workspace.getRemote());
 
-      final FilePath moduleRoot =  workspace;
+    ParseReportCallable fileCallable = new ParseReportCallable(mutationStatsFile_);
+    FilePath[] reports = workspace.act(fileCallable);
+    publishReports(reports, new FilePath(build.getRootDir()));
 
-      ParseReportCallable fileCallable = new ParseReportCallable(mutationStatsFile_);
-      FilePath[] reports = moduleRoot.act(fileCallable);
-      publishReports(reports, new FilePath(build.getRootDir()));
-
-      PitBuildAction action = new PitBuildAction(build);
-      build.getActions().add(action);
-      build.setResult(decideBuildResult(action));
+    PitBuildAction action = new PitBuildAction(build);
+    build.getActions().add(action);
+    build.setResult(decideBuildResult(action));
   }
 
   /**
@@ -82,13 +86,13 @@ public class PitPublisher extends Recorder implements SimpleBuildStep{
     return new PitProjectAction(project);
   }
 
-    /**
-     * Publish reports.
-     *
-     * @param reports     the reports
-     * @param buildTarget the build target
-     */
-    void publishReports(FilePath[] reports, FilePath buildTarget) {
+  /**
+   * Publish reports.
+   *
+   * @param reports     the reports
+   * @param buildTarget the build target
+   */
+  void publishReports(FilePath[] reports, FilePath buildTarget) {
     for (int i = 0; i < reports.length; i++) {
       FilePath report = reports[i];
       listener_.getLogger().println("Publishing mutation report: " + report.getRemote());
@@ -106,35 +110,31 @@ public class PitPublisher extends Recorder implements SimpleBuildStep{
     }
   }
 
-    /**
-     * Mutations report exists boolean.
-     *
-     * @param reportDir the report dir
-     * @return the boolean
-     */
-    boolean mutationsReportExists(FilePath reportDir) {
+  /**
+   * Mutations report exists boolean.
+   *
+   * @param reportDir the report dir
+   * @return the boolean
+   */
+  boolean mutationsReportExists(FilePath reportDir) {
     if (reportDir == null) {
       return false;
     }
     try {
       FilePath[] search = reportDir.list("**/mutations.xml");
       return search.length > 0;
-    }
-    catch (IOException e) {
-      return false;
-    }
-    catch (InterruptedException e) {
+    } catch (IOException | InterruptedException e) {
       return false;
     }
   }
 
-    /**
-     * Decide build result result.
-     *
-     * @param action the action
-     * @return the worst result from all conditions
-     */
-    public Result decideBuildResult(PitBuildAction action) {
+  /**
+   * Decide build result result.
+   *
+   * @param action the action
+   * @return the worst result from all conditions
+   */
+  public Result decideBuildResult(PitBuildAction action) {
     Result result = Result.SUCCESS;
     for (Condition condition : buildConditions_) {
       Result conditionResult = condition.decideResult(action);
@@ -144,79 +144,79 @@ public class PitPublisher extends Recorder implements SimpleBuildStep{
   }
 
 
-    /**
-     * Required by plugin config
-     *
-     * @return the minimum kill ratio
-     */
-    public float getMinimumKillRatio() {
+  /**
+   * Required by plugin config
+   *
+   * @return the minimum kill ratio
+   */
+  public float getMinimumKillRatio() {
     return minimumKillRatio_;
   }
 
-    /**
-     * Required by plugin config
-     *
-     * @return the kill ratio must improve
-     */
-    public boolean getKillRatioMustImprove() {
+  /**
+   * Required by plugin config
+   *
+   * @return the kill ratio must improve
+   */
+  public boolean getKillRatioMustImprove() {
     return killRatioMustImprove_;
   }
 
-    /**
-     * Required by plugin config
-     *
-     * @return the mutation stats file
-     */
-    public String getMutationStatsFile() {
+  /**
+   * Required by plugin config
+   *
+   * @return the mutation stats file
+   */
+  public String getMutationStatsFile() {
     return mutationStatsFile_;
   }
 
-	Condition percentageThreshold(final float percentage) {
-		return new PercentageThresholdCondition(percentage);
-	}
+  Condition percentageThreshold(final float percentage) {
+    return new PercentageThresholdCondition(percentage);
+  }
 
-	class PercentageThresholdCondition implements Condition {
-		private final float percentage;
+  class PercentageThresholdCondition implements Condition {
+    private final float percentage;
 
-		PercentageThresholdCondition(float percentage) {
-			super();
-			this.percentage = percentage;
-		}
+    PercentageThresholdCondition(float percentage) {
+      super();
+      this.percentage = percentage;
+    }
 
-		public Result decideResult(PitBuildAction action) {
-			MutationStats stats = action.getReport().getMutationStats();
-			dologging(stats);
-			return stats.getKillPercent() >= percentage ? Result.SUCCESS : Result.FAILURE;
-		}
+    public Result decideResult(PitBuildAction action) {
+      MutationStats stats = action.getReport().getMutationStats();
+      dologging(stats);
+      return stats.getKillPercent() >= percentage ? Result.SUCCESS : Result.FAILURE;
+    }
 
-		 void dologging(MutationStats stats) {
-			listener_.getLogger().println("Kill ratio is " + stats.getKillPercent() + "% (" + stats.getKillCount()
-					+ "  " + stats.getTotalMutations() + ")");
-		}
-	}
-  
-	class MustImproveCondition implements Condition {
-		public Result decideResult(final PitBuildAction action) {
-			PitBuildAction previousAction = action.getPreviousAction();
-			if (previousAction != null) {
-				MutationStats previousStats = previousAction.getReport().getMutationStats();
-				logInfo(action, previousStats);
-				return action.getReport().getMutationStats().getKillPercent() >= previousStats.getKillPercent() ? Result.SUCCESS
-						: Result.UNSTABLE;
-			} else {
-				return Result.SUCCESS;
-			}
-		}
+    void dologging(MutationStats stats) {
+      listener_.getLogger().println("Kill ratio is " + stats.getKillPercent() + "% (" + stats.getKillCount()
+        + "  " + stats.getTotalMutations() + ")");
+    }
+  }
 
-		 void logInfo(final PitBuildAction action, MutationStats stats) {
-			listener_.getLogger().println("Previous kill ratio was " + stats.getKillPercent() + "%");
-			listener_.getLogger()
-					.println("This kill ration is " + action.getReport().getMutationStats().getKillPercent() + "%");
-		}
-	}
+  class MustImproveCondition implements Condition {
+    public Result decideResult(final PitBuildAction action) {
+      PitBuildAction previousAction = action.getPreviousAction();
+      if (previousAction != null) {
+        MutationStats previousStats = previousAction.getReport().getMutationStats();
+        logInfo(action, previousStats);
+        return action.getReport().getMutationStats().getKillPercent() >= previousStats.getKillPercent() ? Result.SUCCESS
+          : Result.UNSTABLE;
+      } else {
+        return Result.SUCCESS;
+      }
+    }
 
-   Condition mustImprove() {
-    return new MustImproveCondition() ;
+    void logInfo(final PitBuildAction action, MutationStats stats) {
+      listener_.getLogger().println("Previous kill ratio was " + stats.getKillPercent() + "%");
+      listener_.getLogger()
+        .println("This kill ration is " + action.getReport().getMutationStats().getKillPercent() + "%");
+    }
+  }
+
+  Condition mustImprove() {
+    return new MustImproveCondition();
   }
 
   @Override
@@ -232,8 +232,7 @@ public class PitPublisher extends Recorder implements SimpleBuildStep{
     FilePath reportsDir = new FilePath(root, mutationStatsFile_);
     if (reportsDir.isDirectory()) {
       return reportsDir;
-    }
-    else {
+    } else {
       return reportsDir.getParent();
     }
   }
@@ -243,18 +242,18 @@ public class PitPublisher extends Recorder implements SimpleBuildStep{
   private boolean killRatioMustImprove_;
   private float minimumKillRatio_;
   private transient TaskListener listener_;
-  private Run<?,?> build_;
+  private Run<?, ?> build_;
 
+
+  /**
+   * The type Descriptor.
+   */
+  public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
     /**
-     * The type Descriptor.
+     * Instantiates a new Descriptor.
      */
-    public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-
-        /**
-         * Instantiates a new Descriptor.
-         */
-        public DescriptorImpl() {
+    public DescriptorImpl() {
       super(PitPublisher.class);
     }
 
@@ -288,21 +287,21 @@ public class PitPublisher extends Recorder implements SimpleBuildStep{
     }
   }
 
-    /**
-     * The type Parse report callable.
-     */
-    public static class ParseReportCallable implements FilePath.FileCallable<FilePath[]> {
+  /**
+   * The type Parse report callable.
+   */
+  public static class ParseReportCallable implements FilePath.FileCallable<FilePath[]> {
 
     private static final long serialVersionUID = 1L;
 
     private final String reportFilePath;
 
-        /**
-         * Instantiates a new Parse report callable.
-         *
-         * @param reportFilePath the report file path
-         */
-        public ParseReportCallable(String reportFilePath) {
+    /**
+     * Instantiates a new Parse report callable.
+     *
+     * @param reportFilePath the report file path
+     */
+    public ParseReportCallable(String reportFilePath) {
       this.reportFilePath = reportFilePath;
     }
 

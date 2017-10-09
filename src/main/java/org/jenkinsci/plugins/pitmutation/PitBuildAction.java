@@ -63,7 +63,7 @@ public class PitBuildAction implements HealthReportingAction, StaplerProxy {
   }
 
   private Map<String, MutationReport> readReports() {
-    Map<String, MutationReport> reports = new HashMap<String, MutationReport>();
+    Map<String, MutationReport> reports = new HashMap<>();
 
     try {
       FilePath[] files = new FilePath(owner_.getRootDir()).list("mutation-report*/mutations.xml");
@@ -74,14 +74,9 @@ public class PitBuildAction implements HealthReportingAction, StaplerProxy {
 
       for (int i = 0; i < files.length; i++) {
         logger.log(Level.WARNING, "Creating report for file: " + files[i].getRemote());
-        String reportName = files[i].getRemote().replace(System.getenv("JENKINS_HOME") + "/jobs/", "");
-        reports.put(reportName, MutationReport.create(files[i].read()));
+        reports.put(String.valueOf(i), MutationReport.create(files[i].read()));
       }
-    } catch (IOException e) {
-      e.printStackTrace();
-    } catch (SAXException e) {
-      e.printStackTrace();
-    } catch (InterruptedException e) {
+    } catch (IOException | InterruptedException | SAXException e) {
       e.printStackTrace();
     }
     return reports;
@@ -146,7 +141,7 @@ public class PitBuildAction implements HealthReportingAction, StaplerProxy {
     if (req.checkIfModified(t, rsp)) {
       return; // up to date
     }
-    DataSetBuilder<String, ChartUtil.NumberOnlyBuildLabel> dsb = new DataSetBuilder<String, ChartUtil.NumberOnlyBuildLabel>();
+    DataSetBuilder<String, ChartUtil.NumberOnlyBuildLabel> dsb = new DataSetBuilder<>();
 
 
     final JFreeChart chart = ChartFactory.createLineChart(null, // chart title
