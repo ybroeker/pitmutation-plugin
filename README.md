@@ -11,8 +11,7 @@ UPDATED
 -------
 You can use the following step in pipeline to use this plugin in pipeline:
 
-step([$class: 'PitPublisher', mutationStatsFile: 'bla/**/mutations.xml', minimumKillRatio: 50.00, killRatioMustImprove: false])
-
+`step([$class: 'PitPublisher', mutationStatsFile: 'bla/**/mutations.xml', minimumKillRatio: 50.00, killRatioMustImprove: false])`
 
 The plugin needs the XML and HTML output from PIT. Also make sure 
 that a clean target is executed before building, otherwise PIT will 

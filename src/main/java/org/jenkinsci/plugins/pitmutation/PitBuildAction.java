@@ -74,7 +74,8 @@ public class PitBuildAction implements HealthReportingAction, StaplerProxy {
 
       for (int i = 0; i < files.length; i++) {
         logger.log(Level.WARNING, "Creating report for file: " + files[i].getRemote());
-        reports.put(String.valueOf(i), MutationReport.create(files[i].read()));
+        String reportName = files[i].getRemote().replace(System.getenv("JENKINS_HOME") + "/jobs/", "");
+        reports.put(reportName, MutationReport.create(files[i].read()));
       }
     } catch (IOException e) {
       e.printStackTrace();
