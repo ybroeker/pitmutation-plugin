@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.pitmutation.targets.MutationStats;
 import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -16,6 +17,7 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
+import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.Result;
@@ -67,15 +69,33 @@ public class PitPublisher extends Recorder implements SimpleBuildStep {
     listener_ = listener;
     build_ = build;
 
-    listener_.getLogger().println("Looking for PIT reports in " + workspace.getRemote());
+    if (build instanceof AbstractBuild<?, ?> && build.getResult() != null && build.getResult().isBetterOrEqualTo(Result.UNSTABLE)) {
+      AbstractBuild<?, ?> abstractBuild = (AbstractBuild<?, ?>) build;
+      listener_.getLogger().println("Looking for PIT reports in " + abstractBuild.getModuleRoot().getRemote());
 
-    ParseReportCallable fileCallable = new ParseReportCallable(mutationStatsFile_);
-    FilePath[] reports = workspace.act(fileCallable);
-    publishReports(reports, new FilePath(build.getRootDir()));
+      final FilePath[] moduleRoots = abstractBuild.getModuleRoots();
+      final boolean multipleModuleRoots = moduleRoots != null && moduleRoots.length > 1;
+      final FilePath moduleRoot = multipleModuleRoots ? abstractBuild.getWorkspace() : abstractBuild.getModuleRoot();
 
-    PitBuildAction action = new PitBuildAction(build);
-    build.getActions().add(action);
-    build.setResult(decideBuildResult(action));
+      ParseReportCallable fileCallable = new ParseReportCallable(mutationStatsFile_);
+      FilePath[] reports = moduleRoot.act(fileCallable);
+      publishReports(reports, new FilePath(abstractBuild.getRootDir()), abstractBuild.getModuleRoot().getRemote());
+
+      //publish latest reports
+      PitBuildAction action = new PitBuildAction(abstractBuild);
+      abstractBuild.getActions().add(action);
+      abstractBuild.setResult(decideBuildResult(action));
+    } else {
+      listener_.getLogger().println("Looking for PIT reports in " + workspace.getRemote());
+
+      ParseReportCallable fileCallable = new ParseReportCallable(mutationStatsFile_);
+      FilePath[] reports = workspace.act(fileCallable);
+      publishReports(reports, new FilePath(build.getRootDir()), null);
+
+      PitBuildAction action = new PitBuildAction(build);
+      build.getActions().add(action);
+      build.setResult(decideBuildResult(action));
+    }
   }
 
   /**
@@ -92,12 +112,19 @@ public class PitPublisher extends Recorder implements SimpleBuildStep {
    * @param reports     the reports
    * @param buildTarget the build target
    */
-  void publishReports(FilePath[] reports, FilePath buildTarget) {
+  void publishReports(FilePath[] reports, FilePath buildTarget, final String base) {
     for (int i = 0; i < reports.length; i++) {
       FilePath report = reports[i];
       listener_.getLogger().println("Publishing mutation report: " + report.getRemote());
 
-      final FilePath targetPath = new FilePath(buildTarget, "mutation-report" + (i == 0 ? "" : i));
+      final String moduleName;
+      if (StringUtils.isBlank(base)) {
+        moduleName = String.valueOf(i == 0 ? null : i);
+      } else {
+        moduleName = report.getRemote().replace(base, "").split("/")[1];
+      }
+
+      final FilePath targetPath = new FilePath(buildTarget, "mutation-report-" + moduleName);
       try {
         reports[i].getParent().copyRecursiveTo(targetPath);
       } catch (IOException e) {

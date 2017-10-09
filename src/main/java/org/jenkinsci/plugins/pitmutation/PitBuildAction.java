@@ -1,9 +1,14 @@
 package org.jenkinsci.plugins.pitmutation;
 
-import hudson.FilePath;
-import hudson.model.*;
-import hudson.util.ChartUtil;
-import hudson.util.DataSetBuilder;
+import java.io.IOException;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.jenkinsci.plugins.pitmutation.targets.ProjectMutations;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -13,37 +18,39 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.xml.sax.SAXException;
 
-import java.io.IOException;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import hudson.FilePath;
+import hudson.model.HealthReport;
+import hudson.model.HealthReportingAction;
+import hudson.model.Result;
+import hudson.model.Run;
+import hudson.util.ChartUtil;
+import hudson.util.DataSetBuilder;
+
 
 /**
  * @author edward
  */
 public class PitBuildAction implements HealthReportingAction, StaplerProxy {
 
-  public PitBuildAction(Run<?,?> owner) {
+  public PitBuildAction(Run<?, ?> owner) {
     owner_ = owner;
   }
 
   public PitBuildAction getPreviousAction() {
-    Run<?,?> b = owner_;
-    while(true) {
+    Run<?, ?> b = owner_;
+    while (true) {
       b = b.getPreviousBuild();
-      if(b==null)
+      if (b == null)
         return null;
-      if(b.getResult() == Result.FAILURE)
+      if (b.getResult() == Result.FAILURE)
         continue;
       PitBuildAction r = b.getAction(PitBuildAction.class);
-      if(r != null)
+      if (r != null)
         return r;
     }
   }
 
-  public Run<?,?> getOwner() {
+  public Run<?, ?> getOwner() {
     return owner_;
   }
 
@@ -66,15 +73,23 @@ public class PitBuildAction implements HealthReportingAction, StaplerProxy {
     Map<String, MutationReport> reports = new HashMap<>();
 
     try {
-      FilePath[] files = new FilePath(owner_.getRootDir()).list("mutation-report*/mutations.xml");
+      FilePath[] files = new FilePath(owner_.getRootDir()).list("mutation-report-*/mutations.xml");
 
       if (files.length < 1) {
-        logger.log(Level.WARNING, "Could not find mutation-report*/mutations.xml in " + owner_.getRootDir());
+        logger.log(Level.WARNING, "Could not find mutation-report-*/mutations.xml in " + owner_.getRootDir());
       }
 
       for (int i = 0; i < files.length; i++) {
         logger.log(Level.WARNING, "Creating report for file: " + files[i].getRemote());
-        reports.put(String.valueOf(i), MutationReport.create(files[i].read()));
+
+        String name;
+        Matcher m = MUTATION_REPORT_PATTERN.matcher(files[i].getRemote());
+        if (m.find()) {
+          name = m.group(1);
+        } else {
+          name = String.valueOf(i);
+        }
+        reports.put(name, MutationReport.create(files[i].read()));
       }
     } catch (IOException | InterruptedException | SAXException e) {
       e.printStackTrace();
@@ -111,7 +126,7 @@ public class PitBuildAction implements HealthReportingAction, StaplerProxy {
 
   public HealthReport getBuildHealth() {
     return new HealthReport((int) getReport().getMutationStats().getKillPercent(),
-            Messages._BuildAction_Description(getReport().getMutationStats().getKillPercent()));
+      Messages._BuildAction_Description(getReport().getMutationStats().getKillPercent()));
   }
 
   public String getIconFileName() {
@@ -145,18 +160,20 @@ public class PitBuildAction implements HealthReportingAction, StaplerProxy {
 
 
     final JFreeChart chart = ChartFactory.createLineChart(null, // chart title
-            null, // unused
-            "%", // range axis label
-            dsb.build(), // data
-            PlotOrientation.VERTICAL, // orientation
-            true, // include legend
-            true, // tooltips
-            false // urls
+      null, // unused
+      "%", // range axis label
+      dsb.build(), // data
+      PlotOrientation.VERTICAL, // orientation
+      true, // include legend
+      true, // tooltips
+      false // urls
     );//    JFreeChart chart = new MutationChart(this).createChart();
     ChartUtil.generateGraph(req, rsp, chart, 500, 200);
   }
 
   private static final Logger logger = Logger.getLogger(PitBuildAction.class.getName());
+
+  private static final Pattern MUTATION_REPORT_PATTERN = Pattern.compile(".*mutation-report-([^/]*).*");
 
   private Run<?, ?> owner_;
   private Map<String, MutationReport> reports_;
