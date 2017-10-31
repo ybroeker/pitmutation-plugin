@@ -57,14 +57,14 @@ public class PitPublisher extends Recorder implements SimpleBuildStep {
     }
   }
 
-  @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   @Override
   public void perform(@Nonnull Run<?, ?> build, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
 
     listener_ = listener;
     build_ = build;
 
-    if (build instanceof AbstractBuild<?, ?> && build.getResult() != null && build.getResult().isBetterOrEqualTo(Result.UNSTABLE)) {
+    Result result = build.getResult();
+    if (build instanceof AbstractBuild<?, ?> && result != null && result.isBetterOrEqualTo(Result.UNSTABLE)) {
       AbstractBuild<?, ?> abstractBuild = (AbstractBuild<?, ?>) build;
       listener_.getLogger().println("Looking for PIT reports in " + abstractBuild.getModuleRoot().getRemote());
 
