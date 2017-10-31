@@ -3,10 +3,9 @@ package org.jenkinsci.plugins.pitmutation.targets;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import org.jenkinsci.plugins.pitmutation.Mutation;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+
+import javax.annotation.Nonnull;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,19 +17,36 @@ public class MutatedLine extends MutationResult<MutatedLine> {
   public MutatedLine(String line, MutationResult parent, Collection<Mutation> mutations) {
     super(line, parent);
     mutations_ = mutations;
-    lineNumber_ = Integer.valueOf(line);
+    lineNumber_ = Integer.parseInt(line);
   }
 
   public Collection<String> getMutators() {
-    return new HashSet<String>(Collections2.transform(mutations_, getMutatorClasses_));
+    return new HashSet<>(Collections2.transform(mutations_, getMutatorClasses_));
   }
 //
 //  public int getMutationCount() {
 //    return mutations_.size();
 //  }
 
-  public int compareTo(MutatedLine other) {
+  @Override
+  public int compareTo(@Nonnull MutatedLine other) {
     return other.lineNumber_ - lineNumber_;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    return other instanceof MutatedLine
+      && Objects.equals(this.getMutationStats(), ((MutatedLine) other).getMutationStats())
+      && Objects.equals(this.getChildMap(), ((MutatedLine) other).getChildMap())
+      && Objects.equals(this.getDisplayName(), ((MutatedLine) other).getDisplayName())
+      && Objects.equals(this.getMutators(), ((MutatedLine) other).getMutators())
+      && Objects.equals(this.getUrl(), ((MutatedLine) other).getUrl());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.getMutationStats(), this.getChildMap(), this.getDisplayName(),
+      this.getMutators(), this.getUrl());
   }
 
   @Override
@@ -50,7 +66,7 @@ public class MutatedLine extends MutationResult<MutatedLine> {
 
   @Override
   public Map<String, MutationResult<?>> getChildMap() {
-    return new HashMap<String, MutationResult<?>>();
+    return new HashMap<>();
   }
 
   public String getUrl() {
@@ -65,6 +81,10 @@ public class MutatedLine extends MutationResult<MutatedLine> {
 
   private static final Function<Mutation, String> getMutatorClasses_ = new Function<Mutation, String>() {
     public String apply(Mutation mutation) {
+      if (mutation == null) {
+        return null;
+      }
+
       return mutation.getMutatorClass();
     }
   };

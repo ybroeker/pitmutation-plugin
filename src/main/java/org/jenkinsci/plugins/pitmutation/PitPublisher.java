@@ -1,28 +1,11 @@
 package org.jenkinsci.plugins.pitmutation;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.annotation.Nonnull;
-
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.plugins.pitmutation.targets.MutationStats;
-import org.jenkinsci.remoting.RoleChecker;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
-
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.Action;
-import hudson.model.Result;
-import hudson.model.Run;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
@@ -30,6 +13,17 @@ import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.pitmutation.targets.MutationStats;
+import org.jenkinsci.remoting.RoleChecker;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
+
+import javax.annotation.Nonnull;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The type Pit publisher.
@@ -63,6 +57,7 @@ public class PitPublisher extends Recorder implements SimpleBuildStep {
     }
   }
 
+  @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   @Override
   public void perform(@Nonnull Run<?, ?> build, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
 
@@ -76,6 +71,10 @@ public class PitPublisher extends Recorder implements SimpleBuildStep {
       final FilePath[] moduleRoots = abstractBuild.getModuleRoots();
       final boolean multipleModuleRoots = moduleRoots != null && moduleRoots.length > 1;
       final FilePath moduleRoot = multipleModuleRoots ? abstractBuild.getWorkspace() : abstractBuild.getModuleRoot();
+      if (moduleRoot == null) {
+        listener_.getLogger().println("Module root was returned as null");
+        return;
+      }
 
       ParseReportCallable fileCallable = new ParseReportCallable(mutationStatsFile_);
       FilePath[] reports = moduleRoot.act(fileCallable);

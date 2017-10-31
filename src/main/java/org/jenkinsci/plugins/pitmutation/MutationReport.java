@@ -1,12 +1,5 @@
 package org.jenkinsci.plugins.pitmutation;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.logging.Logger;
-
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.HashMultimap;
@@ -16,10 +9,19 @@ import org.apache.commons.digester3.Digester;
 import org.jenkinsci.plugins.pitmutation.targets.MutationStats;
 import org.xml.sax.SAXException;
 
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.logging.Logger;
+
 /**
  * @author edward
  */
-public class MutationReport {
+public class MutationReport implements Serializable {
 
   private static final Logger logger = Logger.getLogger(MutationReport.class.getName());
 
@@ -39,7 +41,7 @@ public class MutationReport {
     digester.addSetProperties("mutations/mutation");
     digester.addSetNestedProperties("mutations/mutation");
 
-    MutationReport report  = digester.parse(input);
+    MutationReport report = digester.parse(input);
     report.mutationsByPackage_ = Multimaps.index(report.mutationsByClass_.values(), packageIndexFunction);
     return report;
   }
@@ -93,23 +95,32 @@ public class MutationReport {
 
   public static Predicate<Mutation> isSurvivor_ = new Predicate<Mutation>() {
     public boolean apply(Mutation mutation) {
-      return !mutation.isDetected();
+      return mutation != null && !mutation.isDetected();
+
     }
   };
 
-  public static final Function<? super Mutation,String> packageIndexFunction = new Function<Mutation, String>() {
+  public static final Function<? super Mutation, String> packageIndexFunction = new Function<Mutation, String>() {
     public String apply(Mutation mutation) {
+      if (mutation == null) {
+        return null;
+      }
+
       return packageNameFromClass(mutation.getMutatedClass());
     }
   };
 
   public static final Function<? super Mutation,String> classIndexFunction = new Function<Mutation, String>() {
     public String apply(Mutation mutation) {
-      return (mutation.getMutatedClass());
+      if (mutation == null) {
+        return null;
+      }
+
+      return mutation.getMutatedClass();
     }
   };
 
-  private static final Set<Mutation> EMPTY_SET = new HashSet<Mutation>();
+  private static final Set<Mutation> EMPTY_SET = new HashSet<>();
 
   private Multimap<String, Mutation> mutationsByPackage_;
   private Multimap<String, Mutation> mutationsByClass_;

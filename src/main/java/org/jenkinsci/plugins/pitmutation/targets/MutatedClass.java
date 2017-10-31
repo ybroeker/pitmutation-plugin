@@ -2,14 +2,15 @@ package org.jenkinsci.plugins.pitmutation.targets;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
+import hudson.util.TextFile;
 import org.jenkinsci.plugins.pitmutation.Mutation;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
-
-import hudson.util.TextFile;
+import java.util.Objects;
 
 /**
  * @author Ed Kimber
@@ -25,8 +26,8 @@ public class MutatedClass extends MutationResult<MutatedClass> {
     int firstDollar = name.indexOf('$');
     package_ = lastDot >= 0 ? name.substring(0, lastDot) : "";
     fileName_ = firstDollar >= 0
-            ? lastDot >= 0 ? name.substring(lastDot + 1, firstDollar) + ".java.html" : ""
-            : lastDot >= 0 ? name.substring(lastDot + 1) + ".java.html" : "";
+      ? lastDot >= 0 ? name.substring(lastDot + 1, firstDollar) + ".java.html" : ""
+      : lastDot >= 0 ? name.substring(lastDot + 1) + ".java.html" : "";
 
     mutatedLines_ = createMutatedLines(mutations);
   }
@@ -47,10 +48,9 @@ public class MutatedClass extends MutationResult<MutatedClass> {
   public String getSourceFileContent() {
     try {
       return new TextFile(new File(getOwner().getRootDir(), "mutation-report-" + getParent().getParent().getName() + "/" + package_ + File.separator + fileName_)).read();
-    }
-    catch (IOException exception) {
+    } catch (IOException exception) {
       return "Could not read source file: " + getOwner().getRootDir().getPath()
-              + "/mutation-report/" + package_ + File.separator + fileName_ + "\n";
+        + "/mutation-report/" + package_ + File.separator + fileName_ + "\n";
     }
   }
 
@@ -68,11 +68,11 @@ public class MutatedClass extends MutationResult<MutatedClass> {
   }
 
   private final Maps.EntryTransformer<String, Collection<Mutation>, MutatedLine> lineTransformer_ =
-          new Maps.EntryTransformer<String, Collection<Mutation>, MutatedLine>() {
-            public MutatedLine transformEntry(String line, Collection<Mutation> mutations) {
-              return new MutatedLine(line, MutatedClass.this, mutations);
-            }
-          };
+    new Maps.EntryTransformer<String, Collection<Mutation>, MutatedLine>() {
+      public MutatedLine transformEntry(String line, Collection<Mutation> mutations) {
+        return new MutatedLine(line, MutatedClass.this, mutations);
+      }
+    };
 
   public String getName() {
     return name_;
@@ -86,8 +86,26 @@ public class MutatedClass extends MutationResult<MutatedClass> {
     return package_;
   }
 
-  public int compareTo(MutatedClass other) {
+  @Override
+  public int compareTo(@Nonnull MutatedClass other) {
     return this.getMutationStats().getUndetected() - other.getMutationStats().getUndetected();
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    return other instanceof MutatedClass
+      && Objects.equals(this.getMutationStats(), ((MutatedClass) other).getMutationStats())
+      && Objects.equals(this.getChildMap(), ((MutatedClass) other).getChildMap())
+      && Objects.equals(this.getDisplayName(), ((MutatedClass) other).getDisplayName())
+      && Objects.equals(this.getFileName(), ((MutatedClass) other).getFileName())
+      && Objects.equals(this.getUrl(), ((MutatedClass) other).getUrl())
+      && Objects.equals(this.getSourceFileContent(), ((MutatedClass) other).getSourceFileContent());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.getMutationStats(), this.getChildMap(), this.getDisplayName(),
+      this.getFileName(), this.getUrl(), this.getSourceFileContent());
   }
 
   private String name_;
