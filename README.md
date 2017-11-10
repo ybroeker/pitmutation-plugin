@@ -5,7 +5,7 @@
 
 Set up as a post-build step, after the PIT mutation tests have been run.
 
-Configure report path, e.g. `target/pit-reports/**/mutations.xml` for a maven build.
+Configure report path, e.g. `target/pit-reports/**/mutations.xml` for a Maven build or `build/reports/pitest/mutations.xml` for a Gradle build.
 
 ## Jenkins Pipeline
 You can use the following step in pipeline to use this plugin in pipeline:
