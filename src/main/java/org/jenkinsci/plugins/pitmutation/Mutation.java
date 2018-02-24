@@ -130,6 +130,13 @@ public class Mutation {
     NO_COVERAGE
   }
 
+  public void setBlock(@SuppressWarnings("unused") String ignored) {
+  }
+
+  public String getBlock() {
+    return null;
+  }
+
   private boolean detected_;
   private String status_;
   private String file_;
