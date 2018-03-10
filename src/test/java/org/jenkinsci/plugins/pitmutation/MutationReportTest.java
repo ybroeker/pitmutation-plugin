@@ -115,6 +115,7 @@ public class MutationReportTest {
         + "<lineNumber>57</lineNumber>"
         + "<mutator>org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator</mutator>"
         + "<index>6</index>"
+        + "<block>3</block>"
         + "<killingTest/>"
         + "</mutation>"
         + "</mutations>";
