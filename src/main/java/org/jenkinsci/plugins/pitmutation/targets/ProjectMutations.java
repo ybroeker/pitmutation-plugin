@@ -27,7 +27,8 @@ public class ProjectMutations extends MutationResult<ProjectMutations> {
   }
 
   public ProjectMutations getPreviousResult() {
-    return action_.getPreviousAction().getReport();
+    PitBuildAction previousAction = action_.getPreviousAction();
+    return previousAction == null ? null : previousAction.getReport();
   }
 
   @Override
