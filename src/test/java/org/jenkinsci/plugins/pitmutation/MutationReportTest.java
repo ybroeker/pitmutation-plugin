@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
@@ -14,7 +13,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
 
 /**
  * @author edward
