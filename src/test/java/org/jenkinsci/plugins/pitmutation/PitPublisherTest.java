@@ -4,8 +4,6 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.jenkinsci.plugins.pitmutation.PitPublisher.MustImproveCondition;
-import org.jenkinsci.plugins.pitmutation.PitPublisher.PercentageThresholdCondition;
 import org.jenkinsci.plugins.pitmutation.targets.MutationStats;
 import org.jenkinsci.plugins.pitmutation.targets.ProjectMutations;
 import org.junit.Before;

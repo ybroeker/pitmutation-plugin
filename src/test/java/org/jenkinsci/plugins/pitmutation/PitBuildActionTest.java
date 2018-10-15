@@ -12,7 +12,6 @@ import static org.mockito.Mockito.when;
 import hudson.model.AbstractBuild;
 import hudson.model.Result;
 
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
 import java.io.FilenameFilter;
 

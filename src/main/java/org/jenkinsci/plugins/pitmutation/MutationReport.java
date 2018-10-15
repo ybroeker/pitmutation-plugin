@@ -9,7 +9,6 @@ import org.apache.commons.digester3.Digester;
 import org.jenkinsci.plugins.pitmutation.targets.MutationStats;
 import org.xml.sax.SAXException;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;

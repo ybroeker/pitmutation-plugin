@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.pitmutation;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
