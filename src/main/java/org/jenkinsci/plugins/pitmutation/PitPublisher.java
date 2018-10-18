@@ -24,6 +24,7 @@ import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.pitmutation.targets.MutationStats;
 import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
@@ -40,8 +41,7 @@ public class PitPublisher extends Recorder implements SimpleBuildStep {
    * @param minimumKillRatio     the minimum kill ratio
    * @param killRatioMustImprove the kill ratio must improve
    */
-  @DataBoundConstructor
-  public PitPublisher(String mutationStatsFile, float minimumKillRatio, boolean killRatioMustImprove) {
+  protected PitPublisher(String mutationStatsFile, float minimumKillRatio, boolean killRatioMustImprove) {
     mutationStatsFile_ = mutationStatsFile;
     killRatioMustImprove_ = killRatioMustImprove;
     minimumKillRatio_ = minimumKillRatio;
@@ -50,6 +50,33 @@ public class PitPublisher extends Recorder implements SimpleBuildStep {
     if (killRatioMustImprove) {
       buildConditions_.add(mustImprove());
     }
+  }
+
+  /**
+   * Instantiates a new Pit publisher with Default-Values.
+   * <p>
+   * {@link #mutationStatsFile_} is set to {@code **{@literal /}target/pit-reports/**{@literal /}mutations.xml},
+   * {@link #minimumKillRatio_} is set to {@code 0.0},
+   * {@link #killRatioMustImprove_} is set to {@code false},
+   */
+  @DataBoundConstructor
+  public PitPublisher() {
+    this("**/target/pit-reports/**/mutations.xml",0,false);
+  }
+
+  @DataBoundSetter
+  public void setMutationStatsFile(final String mutationStatsFile) {
+    this.mutationStatsFile_ = mutationStatsFile;
+  }
+
+  @DataBoundSetter
+  public void setMinimumKillRatio(final float minimumKillRatio) {
+    this.minimumKillRatio_ = minimumKillRatio;
+  }
+
+  @DataBoundSetter
+  public void setKillRatioMustImprove(final boolean killRatioMustImprove) {
+    this.killRatioMustImprove_ = killRatioMustImprove;
   }
 
   @Override
