@@ -1,5 +1,12 @@
 package org.jenkinsci.plugins.pitmutation;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.annotation.Nonnull;
+
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -13,16 +20,11 @@ import hudson.tasks.Recorder;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.pitmutation.targets.MutationStats;
 import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
-
-import javax.annotation.Nonnull;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The type Pit publisher.
@@ -30,12 +32,6 @@ import java.util.List;
  * @author edward
  */
 public class PitPublisher extends Recorder implements SimpleBuildStep {
-
-  /**
-   * The constant DESCRIPTOR.
-   */
-  @Extension
-  public static final BuildStepDescriptor<Publisher> DESCRIPTOR = new DescriptorImpl();
 
   /**
    * Instantiates a new Pit publisher.
@@ -245,11 +241,6 @@ public class PitPublisher extends Recorder implements SimpleBuildStep {
     return new MustImproveCondition();
   }
 
-  @Override
-  public BuildStepDescriptor<Publisher> getDescriptor() {
-    return DESCRIPTOR;
-  }
-
   public BuildStepMonitor getRequiredMonitorService() {
     return BuildStepMonitor.BUILD;
   }
@@ -274,6 +265,8 @@ public class PitPublisher extends Recorder implements SimpleBuildStep {
   /**
    * The type Descriptor.
    */
+  @Extension
+  @Symbol("pitmutation")
   public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
     /**
