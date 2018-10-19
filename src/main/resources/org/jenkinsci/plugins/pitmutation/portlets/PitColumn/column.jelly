@@ -1,0 +1,28 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core">
+  <j:choose>
+    <j:when test="${it != null}">
+      <j:set var="coverageAmount" value="${it.getLineCoverage(job)}" />
+      <j:set var="color" value="${it.getLineColor(job, coverageAmount)}" />
+      <j:set var="backgroundColor" value="${it.getFillColor(job, coverageAmount)}" />
+    </j:when>
+    <j:otherwise>
+      <j:set var="coverageAmount" value="${null}" />
+    </j:otherwise>
+  </j:choose>
+
+  <j:choose>
+    <j:when test="${coverageAmount != null}">
+      <td tooltip="${%Percentage of killed mutations}"
+          style="color:#${color}; background-color:#${backgroundColor};"
+          data="${coverageAmount}" align="center">
+        <a href="${rootURL}/${job.url}lastSuccessfulBuild/pitmutation/">
+          ${coverageAmount}%
+        </a>
+      </td>
+    </j:when>
+    <j:otherwise>
+      <td data="-" align="center"></td>
+    </j:otherwise>
+  </j:choose>
+</j:jelly>

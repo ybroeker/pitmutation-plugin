@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core">
+    <th tooltip="${%Percentage of killed mutations}">${%Pit Coverage}</th>
+</j:jelly>
