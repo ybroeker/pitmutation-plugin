@@ -1,5 +1,12 @@
 package org.jenkinsci.plugins.pitmutation;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.annotation.Nonnull;
+
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -13,16 +20,12 @@ import hudson.tasks.Recorder;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.pitmutation.targets.MutationStats;
 import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
-
-import javax.annotation.Nonnull;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The type Pit publisher.
@@ -32,20 +35,13 @@ import java.util.List;
 public class PitPublisher extends Recorder implements SimpleBuildStep {
 
   /**
-   * The constant DESCRIPTOR.
-   */
-  @Extension
-  public static final BuildStepDescriptor<Publisher> DESCRIPTOR = new DescriptorImpl();
-
-  /**
    * Instantiates a new Pit publisher.
    *
    * @param mutationStatsFile    the mutation stats file
    * @param minimumKillRatio     the minimum kill ratio
    * @param killRatioMustImprove the kill ratio must improve
    */
-  @DataBoundConstructor
-  public PitPublisher(String mutationStatsFile, float minimumKillRatio, boolean killRatioMustImprove) {
+  protected PitPublisher(String mutationStatsFile, float minimumKillRatio, boolean killRatioMustImprove) {
     mutationStatsFile_ = mutationStatsFile;
     killRatioMustImprove_ = killRatioMustImprove;
     minimumKillRatio_ = minimumKillRatio;
@@ -54,6 +50,33 @@ public class PitPublisher extends Recorder implements SimpleBuildStep {
     if (killRatioMustImprove) {
       buildConditions_.add(mustImprove());
     }
+  }
+
+  /**
+   * Instantiates a new Pit publisher with Default-Values.
+   * <p>
+   * {@link #mutationStatsFile_} is set to {@code **{@literal /}target/pit-reports/**{@literal /}mutations.xml},
+   * {@link #minimumKillRatio_} is set to {@code 0.0},
+   * {@link #killRatioMustImprove_} is set to {@code false},
+   */
+  @DataBoundConstructor
+  public PitPublisher() {
+    this("**/target/pit-reports/**/mutations.xml",0,false);
+  }
+
+  @DataBoundSetter
+  public void setMutationStatsFile(final String mutationStatsFile) {
+    this.mutationStatsFile_ = mutationStatsFile;
+  }
+
+  @DataBoundSetter
+  public void setMinimumKillRatio(final float minimumKillRatio) {
+    this.minimumKillRatio_ = minimumKillRatio;
+  }
+
+  @DataBoundSetter
+  public void setKillRatioMustImprove(final boolean killRatioMustImprove) {
+    this.killRatioMustImprove_ = killRatioMustImprove;
   }
 
   @Override
@@ -245,11 +268,6 @@ public class PitPublisher extends Recorder implements SimpleBuildStep {
     return new MustImproveCondition();
   }
 
-  @Override
-  public BuildStepDescriptor<Publisher> getDescriptor() {
-    return DESCRIPTOR;
-  }
-
   public BuildStepMonitor getRequiredMonitorService() {
     return BuildStepMonitor.BUILD;
   }
@@ -274,6 +292,8 @@ public class PitPublisher extends Recorder implements SimpleBuildStep {
   /**
    * The type Descriptor.
    */
+  @Extension
+  @Symbol("pitmutation")
   public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
     /**
